@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Command Center</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- GLOBAL SETUP --- */
+        body { margin: 0; padding: 0; font-family: 'Rajdhani', sans-serif; background-color: #050505; color: white; min-height: 100vh; overflow-x: hidden; }
+        
+        .aurora-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #1a2e05, #000000 70%); z-index: -2; }
+        .cyber-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(185, 255, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(185, 255, 0, 0.05) 1px, transparent 1px); background-size: 50px 50px; mask-image: radial-gradient(circle at center, black 40%, transparent 100%); z-index: -1; pointer-events: none; }
+        
+        /* --- 1. FIXED TOP STATS BAR (HEIGHT INCREASED TO 140px) --- */
+        .top-stats-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 140px; /* INCREASED HEIGHT TO FIT CONTENT */
+            background: rgba(5, 5, 5, 0.95); 
+            border-bottom: 1px solid #b9ff00; 
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        /* --- 2. MAIN CONTAINER (PUSHED DOWN TO 160px) --- */
+        .dash-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+            position: relative; 
+            z-index: 1; 
+            margin-top: 160px; /* INCREASED MARGIN TO AVOID OVERLAP */
+        }
+
+        .stats-deck-top {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 20px;
+            height: 80%; 
+        }
+
+        .hud-card-top {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+            transform: perspective(1000px);
+        }
+        
+        .hud-val { font-size: 2rem; font-weight: 700; color: white; line-height: 1.2; transform: translateZ(20px); }
+        .hud-label { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; transform: translateZ(10px); margin-top: 5px; }
+
+        /* --- CITY SCROLL ANIMATION --- */
+        .city-scroll-wrapper { width: 100%; overflow: hidden; white-space: nowrap; position: relative; }
+        .city-scroll-text { display: inline-block; font-size: 2rem; font-weight: 700; color: #00f3ff; animation: text-scroll 12s linear infinite; padding-left: 100%; }
+        @keyframes text-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-200%); } }
+
+        /* --- HEADER --- */
+        .glass-header { display: flex; justify-content: space-between; align-items: center; background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 20px 40px; border-radius: 16px; margin-bottom: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .user-profile { display: flex; align-items: center; gap: 20px; }
+        .eco-orb { width: 45px; height: 45px; border-radius: 50%; background: #b9ff00; color: black; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; box-shadow: 0 0 25px rgba(185, 255, 0, 0.6); }
+        .user-text h1 { margin: 0; font-size: 1.8rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: white; }
+        .user-text p { margin: 0; color: #b9ff00; font-size: 0.9rem; letter-spacing: 1px; opacity: 0.8; }
+        
+        /* --- BUTTONS --- */
+        .btn-neon { background: #b9ff00; color: black; padding: 12px 30px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; border-radius: 4px; transition: 0.3s; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
+        .btn-neon:hover { background: white; box-shadow: 0 0 30px #b9ff00; }
+        .btn-logout { margin-left: 15px; color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
+        .btn-logout:hover { color: #ff3b30; }
+
+        /* --- ANALYTICS CHARTS --- */
+        .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 50px; }
+        @media (max-width: 768px) { .analytics-grid { grid-template-columns: 1fr; } }
+        
+        .chart-card { background: rgba(10, 10, 10, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; position: relative; }
+        .chart-title { color: #b9ff00; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; font-weight: 700; }
+
+        /* --- LOG GRID --- */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .section-title { font-size: 1.2rem; letter-spacing: 3px; text-transform: uppercase; color: #b9ff00; font-weight: 700; }
+        
+        .btn-purge { 
+            background: rgba(255, 59, 48, 0.15); color: #ff3b30; border: 1px solid #ff3b30;
+            padding: 12px 30px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.95rem; 
+            text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;
+            box-shadow: 0 0 15px rgba(255, 59, 48, 0.2);
+        }
+        .btn-purge:hover { background: #ff3b30; color: black; box-shadow: 0 0 30px rgba(255, 59, 48, 0.8); transform: scale(1.05); }
+
+        .log-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
+        
+        /* CARD DESIGN WITH TILT */
+        .data-card { 
+            background: linear-gradient(180deg, rgba(20,20,20,0.9), rgba(10,10,10,0.95)); 
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; 
+            transition: 0.1s; position: relative;
+            transform-style: preserve-3d; transform: perspective(1000px);
+        }
+        .data-card:hover { border-color: rgba(185, 255, 0, 0.5); box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .card-accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #b9ff00; box-shadow: 0 0 15px rgba(185,255,0,0.5); }
+        
+        .card-content { padding: 25px; transform: translateZ(20px); }
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .loc-title { font-size: 1.4rem; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
+        .loc-date { font-size: 0.8rem; color: #666; margin-top: 5px; font-family: monospace; }
+        
+        .btn-trash { background: none; border: none; font-size: 1.1rem; opacity: 0.3; cursor: pointer; transition: 0.3s; transform: translateZ(30px); }
+        .btn-trash:hover { opacity: 1; transform: scale(1.1); }
+        
+        .crop-badge { display: inline-block; padding: 6px 16px; background: rgba(185, 255, 0, 0.1); border: 1px solid rgba(185, 255, 0, 0.4); color: #b9ff00; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; border-radius: 4px; letter-spacing: 1px; box-shadow: 0 0 15px rgba(185, 255, 0, 0.1); margin-bottom: 20px; transform: translateZ(25px); }
+
+        .hud-grid { background: rgba(0,0,0,0.4); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); transform: translateZ(15px); }
+        .hud-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
+        .hud-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .hud-key { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .hud-data { font-size: 0.95rem; font-weight: 700; color: white; letter-spacing: 0.5px; }
+        .data-highlight { color: #b9ff00; text-shadow: 0 0 10px rgba(185,255,0,0.3); }
+        .cost-display { font-size: 1.3rem; font-weight: 800; color: white; }
+        
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 80px; opacity: 0.3; font-size: 1.2rem; letter-spacing: 2px; border: 1px dashed #333; border-radius: 20px; }
+        
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0px !important; }
+        .language-widget { position: absolute; top: 140px; right: 20px; z-index: 99; }
+    </style>
+</head>
+<body>
+
+    {% set ns = namespace(suspended=0) %}
+    {% for row in history %}
+        {% if 'Suspended' in row['npk_values'] %}
+            {% set ns.suspended = ns.suspended + 1 %}
+        {% endif %}
+    {% endfor %}
+    {% set applied = history|length - ns.suspended %}
+
+    <div class="top-stats-bar">
+        <div class="stats-deck-top">
+            
+            <div class="hud-card-top" data-tilt data-tilt-glare data-tilt-max-glare="0.3">
+                
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px; width: 100%;">
+                    <div class="hud-val">{{ history|length }}</div>
+                    <div class="hud-label">Total Missions</div>
+                </div>
+
+                <div style="display: flex; justify-content: space-around; width: 100%; align-items: center;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #b9ff00; text-shadow: 0 0 10px rgba(185, 255, 0, 0.4);">
+                            {{ applied }}
+                        </div>
+                        <div style="font-size: 0.6rem; color: #888; letter-spacing: 1px;">APPLIED</div>
+                    </div>
+
+                    <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1);"></div>
+
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #ff3b30; text-shadow: 0 0 10px rgba(255, 59, 48, 0.4);">
+                            {{ ns.suspended }}
+                        </div>
+                        <div style="font-size: 0.6rem; color: #888; letter-spacing: 1px;">SUSPENDED</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hud-card-top" data-tilt data-tilt-glare data-tilt-max-glare="0.3">
+                <div class="city-scroll-wrapper">
+                    <span class="city-scroll-text">
+                        {% if history %}{{ history[0]['city'] | upper }}{% else %}---{% endif %}
+                    </span>
+                </div>
+                <div class="hud-label">Latest Sector</div>
+            </div>
+
+            <div class="hud-card-top" data-tilt data-tilt-glare data-tilt-max-glare="0.3">
+                <div class="hud-val" style="color: #b9ff00; text-shadow: 0 0 20px rgba(185,255,0,0.8);">ONLINE</div>
+                <div class="hud-label">System Status</div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="google_translate_element" class="language-widget"></div>
+    <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+          pageLanguage: 'en', 
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+      }, 'google_translate_element');
+    }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <div class="cyber-grid"></div>
+
+    <div class="dash-container">
+        
+        <header class="glass-header">
+    <div class="user-profile">
+        <div class="eco-orb">⚡</div>
+        <div class="user-text">
+            <h1>COMMAND CENTER</h1>
+            <p>
+                OPERATOR: <span style="color: #fff; font-weight: 700;">{{ session.get('user_name', 'GUEST') }}</span> 
+                | GENDER: <span style="opacity: 0.7;">{{ session.get('user_gender', 'N/A') }}</span>
+            </p>
+        </div>
+    </div>
+    <div>
+        <a href="/scan" class="btn-neon">+ NEW SCAN</a>
+        <a href="javascript:void(0)" onclick="openAccountDeleteModal()" style="color: #ff3b30; margin-left: 15px; font-size: 0.9rem; text-decoration: none; font-weight: 600;">TERMINATE ACCOUNT</a>
+        <a href="/logout" class="btn-logout">LOGOUT</a>
+    </div>
+</header>
+
+        {% if history %}
+        <div class="analytics-grid">
+            <div class="chart-card">
+                <div class="chart-title">💸 Investment Timeline</div>
+                <canvas id="costChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🌱 Crop Distribution</div>
+                <canvas id="cropChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="section-header">
+            <span class="section-title">Active Database</span>
+            {% if history %}
+            <button onclick="openDeleteModal('all')" class="btn-purge">DELETE ALL RECORDS</button>
+            {% endif %}
+        </div>
+
+        <div class="log-grid">
+            {% if history %}
+                {% for row in history %}
+                    <div class="data-card" data-tilt data-tilt-scale="1.02">
+                        <div class="card-accent-bar"></div>
+                        <div class="card-content">
+                            <div class="card-top">
+                                <div>
+                                    <div class="loc-title">{{ row['city'] }}</div>
+                                    <div class="loc-date">{{ row['date_applied'] }}</div>
+                                </div>
+                                <button class="btn-trash" data-id="{{ row['id'] }}" onclick="openDeleteModal(this.getAttribute('data-id'))">
+                                    🗑️
+                                </button>
+                            </div>
+
+                            <div class="crop-badge">
+                                🌱 {{ row['crop'] }}
+                            </div>
+
+                            <div class="hud-grid">
+                                {% if 'Suspended' in row['npk_values'] %}
+                                    <div style="text-align: center; color: #ff3b30; font-weight: bold; padding: 10px;">
+                                        ⛔ OPERATION SUSPENDED
+                                    </div>
+                                {% else %}
+                                    <div class="hud-row">
+                                        <span class="hud-key">🎯 Target Mix</span>
+                                        <span class="hud-data data-highlight">{{ row['npk_values'] }}</span>
+                                    </div>
+                                    <div class="hud-row">
+                                        <span class="hud-key">📐 Land Area</span>
+                                        <span class="hud-data">{{ row['acres'] if row['acres'] else '1' }} Acres</span>
+                                    </div>
+                                    <div class="hud-row" style="border-bottom: none; margin-bottom: 0;">
+                                        <span class="hud-key" style="color: #b9ff00;">💰 Investment</span>
+                                        <span class="cost-display">
+                                            {% if row['cost'] %}₹{{ row['cost'] }}{% else %}---{% endif %}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    NO OPERATIONS RECORDED. INITIALIZE A NEW SCAN.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="authModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: #111; border: 1px solid #ff3b30; padding: 30px; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 0 50px rgba(255, 59, 48, 0.2);">
+            <h2 style="color: white; margin-top: 0; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;">⚠️ SECURITY OVERRIDE</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Verify identity to purge data.</p>
+            <input type="email" id="confirmEmail" placeholder="Access ID (Email)" style="width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: white; border-radius: 6px; box-sizing: border-box;">
+            <input type="password" id="confirmPass" placeholder="Passkey" style="width: 100%; padding: 12px; margin-bottom: 20px; background: #000; border: 1px solid #333; color: white; border-radius: 6px; box-sizing: border-box;">
+            <p id="authError" style="color: #ff3b30; display: none; font-size: 0.8rem; margin-bottom: 15px;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeModal()" style="flex: 1; padding: 12px; background: transparent; border: 1px solid #444; color: #aaa; border-radius: 6px; cursor: pointer; font-weight: bold;">CANCEL</button>
+                <button onclick="executeDelete()" style="flex: 1; padding: 12px; background: #ff3b30; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer;">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <script id="history-json" type="application/json">
+    [
+        {% for row in history %}
+        {
+            "city": {{ row['city'] | tojson }},
+            "date_applied": {{ row['date_applied'] | tojson }},
+            "crop": {{ row['crop'] | tojson }},
+            "cost": {{ row['cost'] | tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+    </script>
+
+    <script>
+        // Init Tilt for top bar and cards
+        VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
+            max: 15, speed: 400, glare: true, "max-glare": 0.2
+        });
+
+        // Load Data safely
+        const rawJson = document.getElementById('history-json').textContent;
+        const rawData = JSON.parse(rawJson);
+
+        if (rawData.length > 0) {
+            // Cost Chart
+            const sortedData = [...rawData].reverse(); 
+            const labels = sortedData.map(item => item.date_applied);
+            const costs = sortedData.map(item => parseFloat(item.cost || 0));
+
+            // Crop Chart
+            const cropCounts = {};
+            rawData.forEach(item => {
+                let c = item.crop || "Unknown";
+                cropCounts[c] = (cropCounts[c] || 0) + 1;
+            });
+
+            // Draw Charts
+            const ctxCost = document.getElementById('costChart');
+            if (ctxCost) {
+                new Chart(ctxCost, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Investment (₹)', data: costs, borderColor: '#b9ff00', backgroundColor: 'rgba(185, 255, 0, 0.1)', borderWidth: 2, tension: 0.4, pointBackgroundColor: '#fff', fill: true
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#666' } } } }
+                });
+            }
+
+            const ctxCrop = document.getElementById('cropChart');
+            if (ctxCrop) {
+                new Chart(ctxCrop, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(cropCounts),
+                        datasets: [{
+                            data: Object.values(cropCounts), backgroundColor: ['#b9ff00', '#00d2ff', '#ff3b30', '#ffab00', '#c300ff'], borderWidth: 0,
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#fff', font: { family: 'Rajdhani' } } } }, cutout: '70%' }
+                });
+            }
+        }
+
+        // Delete Logic
+        let deleteTarget = null; 
+        function openDeleteModal(target) {
+            deleteTarget = target;
+            document.getElementById('authModal').style.display = 'flex';
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('confirmPass').value = ''; 
+        }
+        function closeModal() { document.getElementById('authModal').style.display = 'none'; }
+        function openAccountDeleteModal() {
+    deleteTarget = "ACCOUNT_PERMANENT"; // Set the special target
+    document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('authError').style.display = 'none';
+    
+    // UI Update for the Modal
+    document.querySelector('#authModal h2').innerText = '⚠️ ACCOUNT TERMINATION';
+    document.querySelector('#authModal p').innerText = 'CRITICAL: This will permanently wipe your profile and all history.';
+}
+
+// Update your existing executeDelete() to handle redirects
+function executeDelete() {
+    const email = document.getElementById('confirmEmail').value;
+    const password = document.getElementById('confirmPass').value;
+    const errorMsg = document.getElementById('authError');
+    
+    fetch('/secure_delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password, target: deleteTarget })
+    }).then(res => res.json()).then(data => {
+        if (data.success) {
+            // If we deleted the whole account, go to home page, else refresh
+            if (deleteTarget === "ACCOUNT_PERMANENT") {
+                window.location.href = "/";
+            } else {
+                window.location.reload();
+            }
+        } else {
+            errorMsg.innerText = data.message;
+            errorMsg.style.display = 'block';
+        }
+    });
+}
+    </script>
+</body>
+</html>

@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRITICAL ALERT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg-dark: #0b0c10;
+            --neon-red: #ff3b30;
+            --neon-green: #00ff88;
+            --neon-yellow: #ffd700;
+            --glass-panel: rgba(16, 18, 20, 0.95);
+            --border-color: rgba(255, 59, 48, 0.5);
+            --whatsapp-green: #25D366;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-dark);
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+                              url("{{ url_for('static', filename='parallax/alert.jpeg') }}");
+            background-size: cover;
+            background-position: center;
+            font-family: 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .alert-card {
+            position: relative;
+            z-index: 10;
+            background: var(--glass-panel);
+            backdrop-filter: blur(20px);
+            border: 3px solid var(--neon-red);
+            box-shadow: 0 0 60px rgba(255, 59, 48, 0.4);
+            border-radius: 24px;
+            width: 95%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 0.7fr 1.3fr;
+            overflow: hidden;
+        }
+
+        .alert-card.yellow-theme {
+            border-color: var(--neon-yellow);
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.4);
+        }
+        .yellow-text {
+            color: var(--neon-yellow) !important;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
+        }
+
+        /* LEFT */
+        .card-left {
+            background: rgba(255, 59, 48, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+            text-align: center;
+            border-right: 1px solid var(--border-color);
+        }
+        .yellow-theme .card-left {
+            background: rgba(255, 215, 0, 0.08);
+            border-right: 1px solid rgba(255, 215, 0, 0.5);
+        }
+
+        .giant-icon {
+            font-size: 100px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+            filter: drop-shadow(0 0 20px var(--neon-red));
+        }
+        .yellow-theme .giant-icon { filter: drop-shadow(0 0 20px var(--neon-yellow)); }
+
+        h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            color: var(--neon-red);
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
+        }
+        .subtitle { margin-top: 15px; font-size: 1.1rem; opacity: 0.9; letter-spacing: 1px; color: #ddd; }
+
+        @keyframes pulse {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* RIGHT */
+        .card-right {
+            padding: 40px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 15px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .data-group label {
+            display: block;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .location-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+        .rainfall-text { font-size: 1.6rem; font-weight: bold; color: #4facfe; text-shadow: 0 0 15px #4facfe; }
+        .crop-text     { font-size: 1.6rem; font-weight: bold; color: #ffd700; text-shadow: 0 0 15px #ffd700; }
+
+        /* REASON BOX */
+        .reason-box {
+            background: rgba(255, 59, 48, 0.05);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+        }
+        .yellow-theme .reason-box {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .reason-header {
+            color: var(--neon-red);
+            font-weight: 800;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        ul  { margin: 0; padding-left: 25px; color: rgba(255,255,255,0.9); }
+        li  { margin-bottom: 8px; line-height: 1.4; }
+
+        /* WEATHER STRIP */
+        .weather-strip-container { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .strip-label { color: var(--neon-yellow); font-size: 0.9rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; display: block; }
+        .weather-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+        .weather-strip::-webkit-scrollbar       { height: 4px; }
+        .weather-strip::-webkit-scrollbar-thumb { background: var(--neon-yellow); border-radius: 4px; }
+        .weather-strip::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+
+        .weather-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 65px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+        .weather-item:hover { background: rgba(255,215,0,0.1); border-color: var(--neon-yellow); }
+        .w-time { font-size: 0.8rem; opacity: 0.7; margin-bottom: 4px; }
+        .w-icon { width: 35px; height: 35px; object-fit: contain; }
+        .w-temp { font-weight: bold; font-size: 0.95rem; margin: 2px 0; color: white; }
+        .w-rain { font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
+        .rain-safe   { color: #4facfe; }
+        .rain-danger { color: #ff4d4d; }
+
+        /* HOLO GRID */
+        .rec-container { margin-top: 10px; }
+        .rec-title {
+            color: var(--neon-green);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+        .rec-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, var(--neon-green), transparent);
+            box-shadow: 0 0 5px var(--neon-green);
+        }
+        .cartridge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .cartridge-grid::-webkit-scrollbar       { width: 6px; }
+        .cartridge-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; }
+        .cartridge-grid::-webkit-scrollbar-thumb { background: var(--neon-green); border-radius: 3px; }
+        .holo-card {
+            background: linear-gradient(135deg, rgba(0,255,136,0.05), rgba(0,255,136,0));
+            border: 1px solid rgba(0,255,136,0.3);
+            border-left: 4px solid var(--neon-green);
+            padding: 12px 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: default;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: inset 0 0 10px rgba(0,255,136,0.05);
+        }
+        .holo-card:hover {
+            background: rgba(0,255,136,0.2);
+            box-shadow: 0 0 20px rgba(0,255,136,0.4), inset 0 0 10px rgba(0,255,136,0.2);
+            transform: translateY(-3px) scale(1.02);
+            border-color: var(--neon-green);
+            text-shadow: 0 0 5px white;
+        }
+
+        /* BUTTONS */
+        .btn-container { display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
+        .action-btn {
+            background: var(--neon-red); color: white; border: none; padding: 15px 30px;
+            border-radius: 50px; font-weight: 800; cursor: pointer; text-decoration: none;
+            text-align: center; flex: 1; font-size: 1rem; text-transform: uppercase;
+            letter-spacing: 1px; transition: 0.3s; box-shadow: 0 0 20px rgba(255,59,48,0.4);
+        }
+        .action-btn:hover { background: white; color: var(--neon-red); box-shadow: 0 0 40px rgba(255,59,48,0.8); }
+
+        .whatsapp-btn {
+            background: var(--whatsapp-green); color: white; border: none; padding: 15px 30px;
+            border-radius: 50px; font-weight: 800; cursor: pointer; text-decoration: none;
+            text-align: center; flex: 1; font-size: 1rem; text-transform: uppercase;
+            letter-spacing: 1px; transition: 0.3s; box-shadow: 0 0 20px rgba(37,211,102,0.4);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .whatsapp-btn:hover { background: white; color: var(--whatsapp-green); box-shadow: 0 0 40px rgba(37,211,102,0.8); }
+
+        .cancel-btn {
+            background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white;
+            padding: 15px 30px; border-radius: 50px; cursor: pointer; text-decoration: none;
+            text-align: center; font-size: 1rem; font-weight: 600; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cancel-btn:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 768px) {
+            .alert-card { grid-template-columns: 1fr; max-width: 450px; margin: 10px auto; height: auto; max-height: 95vh; overflow-y: auto; }
+            .card-left  { padding: 30px; border-right: none; border-bottom: 2px solid var(--border-color); }
+            .card-right { padding: 25px; max-height: none; }
+            .data-row   { flex-direction: column; gap: 15px; }
+            .data-group { text-align: left !important; }
+            .btn-container { flex-direction: column; }
+            .giant-icon { font-size: 70px; }
+            h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="alert-card {% if alert_type == 'forecast_unsafe' %}yellow-theme{% endif %}">
+
+    <!-- ══ LEFT PANEL ══ -->
+    <div class="card-left">
+        {% if alert_type == 'heavy_rain' %}
+            <div class="giant-icon">⛔</div>
+            <h1>Fertilization<br>Suspended</h1>
+            <div class="subtitle">Unsafe weather conditions detected</div>
+
+        {% elif alert_type == 'zone_mismatch' %}
+            <div class="giant-icon">🌍</div>
+            <h1>Biological<br>Mismatch</h1>
+            <div class="subtitle">Crop incompatible with region</div>
+
+        {% elif alert_type == 'forecast_unsafe' %}
+            <div class="giant-icon">☔</div>
+            <h1 class="yellow-text">Conditions<br>Unsafe</h1>
+            <!-- FIX: Was hardcoded "Rain expected" but manual temp/humidity
+                 checks also trigger this — made generic -->
+            <div class="subtitle">Unsafe conditions for fertilization</div>
+        {% endif %}
+    </div>
+
+    <!-- ══ RIGHT PANEL ══ -->
+    <div class="card-right">
+
+        <div class="data-row">
+            <div class="data-group">
+                <label>Location</label>
+                <!-- FIX 1: state was missing from forecast_unsafe Flask renders
+                     FIX 2: removed |title filter — Flask already sends state as .title()
+                     FIX 3: conditional so no trailing comma if state is empty -->
+                <div class="location-text">
+                    📍 {{ city }}{% if state %}, {{ state }}{% endif %}
+                </div>
+            </div>
+
+            <div class="data-group" style="text-align: right;">
+                {% if alert_type == 'heavy_rain' %}
+                    <label>Rainfall Recorded</label>
+                    <div class="rainfall-text">{{ rainfall }} mm</div>
+
+                {% elif alert_type == 'zone_mismatch' %}
+                    <label>Selected Crop</label>
+                    <div class="crop-text">{{ crop }}</div>
+
+                {% elif alert_type == 'forecast_unsafe' %}
+                    <label>Selected Crop</label>
+                    <!-- FIX 4: crop was not passed in forecast_unsafe renders
+                         Added safe fallback with '—' if still missing -->
+                    <div class="crop-text yellow-text">{{ crop if crop else '—' }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="reason-box">
+            {% if alert_type == 'heavy_rain' %}
+                <span class="reason-header">⚠️ Reason: High Risk of Nutrient Runoff</span>
+                <ul>
+                    <li>Heavy rainfall washes away fertilizers immediately.</li>
+                    <li>Wait for rain to subside before application.</li>
+                </ul>
+
+            {% elif alert_type == 'zone_mismatch' %}
+                <span class="reason-header">⚠️ Reason: Agro-Climatic Violation</span>
+                <ul>
+                    <!-- FIX 2: removed |title — state already title-cased from Flask -->
+                    <li><strong>{{ crop }}</strong> is not naturally suitable for
+                        <strong>{{ city }}{% if state %}, {{ state }}{% endif %}</strong>.
+                    </li>
+                    <li>Please select a locally viable crop from the list below.</li>
+                </ul>
+                <div id="recommendation-ui" class="rec-container" style="display: none;">
+                    <div class="rec-title">
+                        Bio-Compatible Options for {{ city }}{% if state %}, {{ state }}{% endif %}
+                    </div>
+                    <div id="crop-cartridge-area" class="cartridge-grid"></div>
+                </div>
+
+            {% elif alert_type == 'forecast_unsafe' %}
+                <span class="reason-header yellow-text">⚠️ Reason: Unsafe Conditions Detected</span>
+                <ul>
+                    <!-- FIX 5: reason was not passed in some renders
+                         Safe fallback message added -->
+                    <li><strong>{{ reason if reason else 'Weather or soil conditions are outside the safe fertilization range.' }}</strong></li>
+                    <li>Fertilizer requires stable conditions to bind properly with soil.</li>
+                    <li>Applying now risks poor absorption and financial loss.</li>
+                </ul>
+
+                {% if forecast %}
+                <div class="weather-strip-container">
+                    <span class="strip-label">☔ Next 48 Hours Forecast</span>
+                    <div class="weather-strip">
+                        {% for hour in forecast %}
+                        <div class="weather-item">
+                            <span class="w-time">{{ hour.time }}</span>
+                            <img src="{{ hour.icon }}" class="w-icon" alt="wx">
+                            <span class="w-temp">{{ hour.temp }}°C</span>
+                            <!-- FIX 6: class was "rain-risk" — does not exist in CSS.
+                                 Corrected to "rain-danger" which matches the CSS rule -->
+                            <span class="w-rain {% if hour.rain_prob > 50 %}rain-danger{% else %}rain-safe{% endif %}">
+                                {{ hour.rain_prob }}%
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <!-- FIX 7: When manual override triggers alert, forecast is empty.
+                     Show helpful message instead of blank space -->
+                <div style="margin-top: 15px; padding: 12px; background: rgba(255,215,0,0.08);
+                            border-radius: 8px; border: 1px solid rgba(255,215,0,0.2);
+                            font-size: 0.9rem; color: rgba(255,255,255,0.7);">
+                    💡 These values were manually entered. Correct the conditions and resubmit when safe.
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="btn-container">
+            {% if is_logged_in and alert_type == 'heavy_rain' %}
+            <button id="ackBtn" class="action-btn" onclick="acknowledgeAlert()">
+                ⚠️ Acknowledge
+            </button>
+            {% endif %}
+
+            <button class="whatsapp-btn" onclick="shareWarning()">
+                📲 Warn Farmer
+            </button>
+
+            <a href="/" class="cancel-btn">← Back</a>
+        </div>
+
+        <p id="saveMsg" style="text-align: center; color: #4facfe; margin-top: 15px;
+                               display: none; font-size: 1rem; font-weight: bold;">
+            ✅ Alert Recorded to History.
+        </p>
+
+    </div>
+</div>
+
+<script>
+    // ══════════════════════════════════════════════════
+    // 1. WHATSAPP SHARE
+    // ══════════════════════════════════════════════════
+    function shareWarning() {
+        var city      = "{{ city }}";
+        var state     = "{{ state }}";
+        var alertType = "{{ alert_type }}";
+        var location  = state ? city + ", " + state : city;
+        var message   = "";
+
+        if (alertType === 'heavy_rain') {
+            var rainfall = "{{ rainfall }}";
+            message = `*⛔ URGENT ALERT: FERTILIZATION HALTED ⛔*
+---------------------------
+📍 *Location:* ${location}
+🌧️ *Current Rainfall:* ${rainfall} mm
+---------------------------
+⚠️ *CRITICAL WARNING:*
+High risk of nutrient runoff detected.
+Do NOT apply fertilizer today.
+---------------------------
+✅ *ACTION REQUIRED:*
+Wait for clear weather before application.`;
+
+        } else if (alertType === 'zone_mismatch') {
+            var crop = "{{ crop }}";
+            message = `*⚠️ CROP MISMATCH ALERT ⚠️*
+---------------------------
+📍 *Location:* ${location}
+🌱 *Selected Crop:* ${crop}
+---------------------------
+⛔ *WARNING:*
+This crop is not suitable for this agro-climatic zone.
+---------------------------
+✅ *ACTION REQUIRED:*
+Please review recommended crops for this region.`;
+
+        } else if (alertType === 'forecast_unsafe') {
+            var reason = `{{ reason | replace('\n', ' ') | replace('"', '') }}`;
+            message = `*☔ UNSAFE CONDITIONS: DO NOT FERTILIZE ☔*
+---------------------------
+📍 *Location:* ${location}
+---------------------------
+⚠️ *REASON:*
+${reason}
+---------------------------
+⛔ *WHY STOP?*
+Fertilizer needs stable conditions to absorb.
+Applying now risks complete financial loss.
+---------------------------
+✅ *ACTION REQUIRED:*
+Wait for conditions to improve before applying.`;
+        }
+
+        window.open("https://wa.me/?text=" + encodeURIComponent(message), '_blank');
+    }
+
+    // ══════════════════════════════════════════════════
+    // 2. CROP DATABASE
+    // ══════════════════════════════════════════════════
+    const cropDB = {
+        "default": ["RICE","WHEAT","MAIZE","POTATO","TOMATO","ONION","CABBAGE","CAULIFLOWER","MUSTARD","CHICKPEA","LENTIL","GREEN GRAM","BLACK GRAM","GROUNDNUT","SUNFLOWER","SOYBEAN","SUGARCANE","BANANA","MANGO","GUAVA"],
+        "andaman & nicobar": ["RICE","COCONUT","ARECANUT","BANANA","PAPAYA","BLACK PEPPER","RUBBER","GINGER","TURMERIC","CLOVE","CINNAMON","NUTMEG","SWEET POTATO","TAPIOCA","YAM","PINEAPPLE","MANGO","LEMONGRASS","ALOE VERA"],
+        "andhra pradesh": ["RICE","COTTON","CHILLI","TOOR","BENGAL GRAM","GROUNDNUT","SUNFLOWER","SUGARCANE","MAIZE","JOWAR","BAJRA","RAGI","CHICKPEA","PIGEON PEA","GREEN GRAM","BLACK GRAM","COWPEA","TOBACCO","TURMERIC","ONION","TOMATO","BRINJAL","OKRA","MANGO","BANANA","PAPAYA","SWEET POTATO","YAM","BEETROOT","SUGAR BEET","ALFALFA","NAPIER GRASS","CORIANDER","COCONUT","FODDER SORGHUM","LEMONGRASS"],
+        "arunachal pradesh": ["RICE","MAIZE","MILLET","POTATO","GINGER","TURMERIC","ORANGE","PINEAPPLE","TEA","CARDAMOM","KIWI","APPLE","CABBAGE","CAULIFLOWER","RADISH","BEANS","MUSTARD","SOYBEAN","BLACK GRAM"],
+        "assam": ["RICE","TEA","JUTE","SUGARCANE","POTATO","MUSTARD","BANANA","GINGER","TURMERIC","BLACK PEPPER","ARECANUT","COCONUT","ORANGE","PAPAYA","PINEAPPLE","JACKFRUIT","GREEN GRAM","BLACK GRAM","LENTIL","PEAS","CABBAGE","CAULIFLOWER","BRINJAL","OKRA","TOOR","LEMONGRASS"],
+        "bihar": ["RICE","WHEAT","MAIZE","TOOR","BENGAL GRAM","JUTE","SUGARCANE","POTATO","LENTIL","PEAS","CHICKPEA","PIGEON PEA","MUSTARD","LINSEED","SUNFLOWER","BANANA","MANGO","GUAVA","LITCHI","BRINJAL","CAULIFLOWER","CABBAGE","ONION","TOMATO","OKRA","YAM","BEETROOT","FODDER MAIZE","BERSEEM"],
+        "chandigarh": ["WHEAT","RICE","MAIZE","MUSTARD","POTATO","CAULIFLOWER","CABBAGE","CARROT","RADISH","SPINACH","FODDER MAIZE","FODDER SORGHUM","BERSEEM","TULSI","ALOE VERA","MINT"],
+        "chhattisgarh": ["RICE","MAIZE","KODO MILLET","TOOR","BENGAL GRAM","SOYBEAN","GROUNDNUT","SUNFLOWER","PIGEON PEA","CHICKPEA","GREEN GRAM","BLACK GRAM","MUSTARD","LINSEED","WHEAT","TOMATO","BRINJAL","OKRA","CABBAGE","CAULIFLOWER","POTATO","GINGER","TURMERIC","LEMONGRASS"],
+        "dadra & nagar haveli": ["RICE","RAGI","JOWAR","TOOR","PIGEON PEA","BEANS","BANANA","MANGO","CHICKPEA","GROUNDNUT","SUGARCANE","BRINJAL","TOMATO","CABBAGE"],
+        "daman & diu": ["BAJRA","JOWAR","GROUNDNUT","COCONUT","BEANS","SAPOTA","BANANA","MANGO","VEGETABLES","FODDER SORGHUM"],
+        "delhi": ["WHEAT","MUSTARD","JOWAR","BAJRA","PADDY","CAULIFLOWER","CABBAGE","CARROT","RADISH","SPINACH","OKRA","TOMATO","BRINJAL","PEAS","BERSEEM","TULSI","ALOE VERA","MINT","NEEM"],
+        "goa": ["RICE","COCONUT","CASHEW","ARECANUT","MANGO","BANANA","PINEAPPLE","JACKFRUIT","BLACK PEPPER","SWEET POTATO","RAGI","COWPEA","GROUNDNUT","TURMERIC"],
+        "gujarat": ["COTTON","GROUNDNUT","CASTOR","SESAME","WHEAT","RICE","BAJRA","JOWAR","MAIZE","TOOR","PIGEON PEA","CHICKPEA","BENGAL GRAM","GREEN GRAM","BLACK GRAM","MUSTARD","CUMIN","FENNEL","ONION","GARLIC","POTATO","BANANA","MANGO","PAPAYA","POMEGRANATE","GUAVA","SUGARCANE","TOBACCO","SUGAR BEET","ALFALFA","ALOE VERA","LEMONGRASS"],
+        "haryana": ["WHEAT","RICE","COTTON","MUSTARD","SUGARCANE","BARLEY","MAIZE","BAJRA","JOWAR","CHICKPEA","BENGAL GRAM","SUNFLOWER","GUAVA","ORANGE","KINNOW","POTATO","CAULIFLOWER","CABBAGE","BERSEEM","FODDER MAIZE","FODDER SORGHUM","SUGAR BEET","TULSI","ALOE VERA","MUSHROOM"],
+        "himachal pradesh": ["APPLE","MAIZE","WHEAT","BARLEY","POTATO","PEAS","GINGER","TOMATO","CABBAGE","CAULIFLOWER","BEANS","PLUM","PEACH","APRICOT","PEAR","ORANGE","MANGO","LITCHI","GUAVA","POMEGRANATE","TEA","FLAX","HEMP","BEETROOT","MINT"],
+        "jammu & kashmir": ["APPLE","RICE","MAIZE","WHEAT","BARLEY","RAJMASH","FODDER MAIZE","WALNUT","ALMOND","CHERRY","APRICOT","PEAR","PLUM","SAFFRON","MUSTARD","POTATO","CABBAGE","CAULIFLOWER"],
+        "jharkhand": ["RICE","MAIZE","WHEAT","CHICKPEA","BENGAL GRAM","TOOR","PIGEON PEA","BLACK GRAM","GREEN GRAM","MUSTARD","GROUNDNUT","POTATO","BRINJAL","TOMATO","CABBAGE","CAULIFLOWER","OKRA","MANGO","GUAVA","JACKFRUIT","PAPAYA","NIGER"],
+        "karnataka": ["RICE","RAGI","JOWAR","MAIZE","BAJRA","WHEAT","TOOR","PIGEON PEA","CHICKPEA","BENGAL GRAM","GREEN GRAM","BLACK GRAM","COWPEA","GROUNDNUT","SUNFLOWER","SOYBEAN","COTTON","SUGARCANE","TOBACCO","COCONUT","ARECANUT","COFFEE","CASHEW","CARDAMOM","BLACK PEPPER","GRAPES","POMEGRANATE","MANGO","BANANA","TOMATO","ONION","POTATO","GINGER","TURMERIC","SUGAR BEET","NAPIER GRASS","YAM","BEETROOT","COCOA","ALOE VERA","ASHWAGANDHA"],
+        "kerala": ["RICE","COCONUT","RUBBER","TEA","COFFEE","BLACK PEPPER","CARDAMOM","ARECANUT","GINGER","TURMERIC","BANANA","TAPIOCA","NUTMEG","CLOVE","CINNAMON","CASHEW","PINEAPPLE","MANGO","JACKFRUIT","PAPAYA","YAM","BEETROOT","NAPIER GRASS","COCOA","LEMONGRASS"],
+        "lakshadweep": ["COCONUT","BANANA","PAPAYA","GUAVA","SAPOTA","CHILLI","TOMATO","BRINJAL","SWEET POTATO","DRUMSTICK","BREADFRUIT"],
+        "madhya pradesh": ["SOYBEAN","WHEAT","CHICKPEA","BENGAL GRAM","MAIZE","RICE","JOWAR","BAJRA","TOOR","PIGEON PEA","LENTIL","GREEN GRAM","BLACK GRAM","PEAS","MUSTARD","LINSEED","SESAME","GROUNDNUT","COTTON","SUGARCANE","ONION","GARLIC","POTATO","TOMATO","CORIANDER","CHILLI","GINGER","ORANGE","GUAVA","MANGO","BANANA","FLAX","BEETROOT","BERSEEM","ASHWAGANDHA","ALOE VERA","LEMONGRASS"],
+        "maharashtra": ["COTTON","SOYBEAN","SUGARCANE","JOWAR","BAJRA","WHEAT","RICE","MAIZE","TOOR","PIGEON PEA","CHICKPEA","BENGAL GRAM","GREEN GRAM","BLACK GRAM","GROUNDNUT","SUNFLOWER","SAFFLOWER","SESAME","ONION","GRAPES","POMEGRANATE","BANANA","MANGO","ORANGE","CASHEW","TOMATO","BRINJAL","TURMERIC","GINGER","SUGAR BEET","ALFALFA","NAPIER GRASS","BEETROOT"],
+        "manipur": ["RICE","MAIZE","POTATO","MUSTARD","PEAS","CABBAGE","CAULIFLOWER","PINEAPPLE","ORANGE","BANANA","PASSION FRUIT","GINGER","TURMERIC","CHILLI","KING CHILLI","SOYBEAN","BLACK GRAM","RICE BEAN"],
+        "meghalaya": ["RICE","MAIZE","POTATO","GINGER","TURMERIC","BLACK PEPPER","ARECANUT","BETELVINE","ORANGE","PINEAPPLE","BANANA","PLUM","PEAR","PEACH","CASHEW","TEA","TOMATO","CABBAGE","CAULIFLOWER"],
+        "mizoram": ["RICE","MAIZE","MUSTARD","SESAME","POTATO","GINGER","TURMERIC","CHILLI","SUGARCANE","BANANA","ORANGE","PINEAPPLE","PAPAYA","PASSION FRUIT","HATKORA","OIL PALM","COFFEE","TEA"],
+        "nagaland": ["RICE","MAIZE","MILLET","PEAS","MUSTARD","POTATO","GINGER","TURMERIC","CHILLI","CARDAMOM","COFFEE","TEA","PINEAPPLE","ORANGE","PAPAYA","BANANA","PASSION FRUIT","VEGETABLES","BAMBOO"],
+        "odisha": ["RICE","GREEN GRAM","BLACK GRAM","TOOR","PIGEON PEA","CHICKPEA","BENGAL GRAM","GROUNDNUT","SESAME","MUSTARD","CASTOR","SUNFLOWER","JUTE","MESTA","SUGARCANE","COTTON","POTATO","BRINJAL","TOMATO","CABBAGE","CAULIFLOWER","OKRA","MANGO","BANANA","COCONUT","CASHEW","TURMERIC","GINGER","SWEET POTATO","YAM"],
+        "orissa": ["RICE","GREEN GRAM","BLACK GRAM","TOOR","PIGEON PEA","CHICKPEA","BENGAL GRAM","GROUNDNUT","SESAME","MUSTARD","CASTOR","SUNFLOWER","JUTE","MESTA","SUGARCANE","COTTON","POTATO","BRINJAL","TOMATO","CABBAGE","CAULIFLOWER","OKRA","MANGO","BANANA","COCONUT","CASHEW","TURMERIC","GINGER","SWEET POTATO","YAM"],
+        "pondicherry": ["RICE","SUGARCANE","GROUNDNUT","COTTON","BLACK GRAM","GREEN GRAM","COCONUT","BANANA","MANGO","TAPIOCA","BRINJAL","OKRA","FLOWERS","ARECANUT"],
+        "punjab": ["WHEAT","RICE","COTTON","MAIZE","SUGARCANE","POTATO","MUSTARD","SUNFLOWER","BARLEY","GREEN GRAM","BLACK GRAM","PEAS","KINNOW","GUAVA","MANGO","PEAR","PEACH","GRAPES","BER","CARROT","RADISH","MUSHROOM","BERSEEM","FODDER MAIZE","FODDER SORGHUM","BENGAL GRAM","SUGAR BEET","MINT"],
+        "rajasthan": ["BAJRA","JOWAR","MAIZE","WHEAT","BARLEY","CHICKPEA","BENGAL GRAM","GREEN GRAM","BLACK GRAM","MOTH BEAN","GROUNDNUT","MUSTARD","SOYBEAN","SESAME","CASTOR","COTTON","CUMIN","CORIANDER","FENNEL","FENUGREEK","ISABGOL","GUAR","ORANGE","KINNOW","POMEGRANATE","GUAVA","DATE PALM","BER","ONION","GARLIC","BERSEEM","ALFALFA","FODDER SORGHUM","ALOE VERA"],
+        "sikkim": ["MAIZE","RICE","WHEAT","BUCKWHEAT","MILLET","BARLEY","BLACK GRAM","RAJMASH","SOYBEAN","MUSTARD","CARDAMOM","GINGER","TURMERIC","ORANGE","POTATO","TEA","CHERRY PEPPER","CABBAGE"],
+        "tamil nadu": ["RICE","JOWAR","BAJRA","RAGI","MAIZE","TOOR","PIGEON PEA","GREEN GRAM","BLACK GRAM","CHICKPEA","BENGAL GRAM","HORSE GRAM","GROUNDNUT","SESAME","SUNFLOWER","COCONUT","COTTON","SUGARCANE","BANANA","MANGO","TAPIOCA","COFFEE","TEA","RUBBER","CASHEW","TURMERIC","CHILLI","ONION","TOMATO","BRINJAL","OKRA","JASMINE","SUGAR BEET","YAM","BEETROOT","NAPIER GRASS","COCOA","ASHWAGANDHA"],
+        "tripura": ["RICE","WHEAT","MAIZE","BLACK GRAM","GREEN GRAM","POTATO","SUGARCANE","JUTE","MESTA","TEA","RUBBER","PINEAPPLE","ORANGE","JACKFRUIT","BANANA","LITCHI","LEMON","CASHEW","COCONUT","ARECANUT","GINGER","TURMERIC","CHILLI"],
+        "uttar pradesh": ["WHEAT","RICE","SUGARCANE","MAIZE","BAJRA","JOWAR","BARLEY","CHICKPEA","BENGAL GRAM","TOOR","PIGEON PEA","LENTIL","PEAS","BLACK GRAM","GREEN GRAM","MUSTARD","GROUNDNUT","LINSEED","SESAME","SUNFLOWER","POTATO","ONION","GARLIC","TOMATO","BRINJAL","CABBAGE","CAULIFLOWER","OKRA","MANGO","GUAVA","AONLA","PAPAYA","BANANA","MENTHA","BERSEEM","FODDER MAIZE","FODDER SORGHUM","HEMP","MINT","BEETROOT","TULSI","ALOE VERA","NEEM"],
+        "uttaranchal": ["RICE","WHEAT","MAIZE","RAGI","BARLEY","LENTIL","PEAS","SOYBEAN","MUSTARD","GROUNDNUT","SUGARCANE","POTATO","ONION","CABBAGE","TOMATO","APPLE","PEAR","PEACH","PLUM","APRICOT","WALNUT","LITCHI","MANGO","ORANGE","MALTA","LEMON","TEA","HEMP","FLAX","BEETROOT","MINT","TULSI","BENGAL GRAM"],
+        "uttarakhand": ["RICE","WHEAT","MAIZE","RAGI","BARLEY","LENTIL","PEAS","SOYBEAN","MUSTARD","GROUNDNUT","SUGARCANE","POTATO","ONION","CABBAGE","TOMATO","APPLE","PEAR","PEACH","PLUM","APRICOT","WALNUT","LITCHI","MANGO","ORANGE","MALTA","LEMON","TEA","HEMP","FLAX","BEETROOT","MINT","TULSI","BENGAL GRAM"],
+        "west bengal": ["RICE","JUTE","POTATO","WHEAT","MAIZE","LENTIL","CHICKPEA","BENGAL GRAM","PEAS","TOOR","MUSTARD","SESAME","GROUNDNUT","SUGARCANE","TOBACCO","TEA","BETELVINE","MANGO","BANANA","PINEAPPLE","GUAVA","LITCHI","PAPAYA","JACKFRUIT","BRINJAL","CABBAGE","CAULIFLOWER","OKRA","TOMATO","CHILLI","GINGER","TURMERIC","BEETROOT","YAM","FODDER MAIZE"]
+    };
+
+    // ══════════════════════════════════════════════════
+    // 3. CROP RECOMMENDATIONS (zone_mismatch only)
+    // ══════════════════════════════════════════════════
+    function showRecommendations() {
+        var recUI = document.getElementById('recommendation-ui');
+        if (!recUI) return;
+
+        // FIX: Flask sends state as title-case ("Karnataka")
+        // but cropDB keys are lowercase — normalise for lookup
+        var stateRaw = "{{ state }}".toLowerCase().trim();
+        var cityRaw  = "{{ city }}".toLowerCase().trim();
+
+        var suggestions = cropDB['default'];
+
+        if (cropDB[stateRaw]) {
+            suggestions = cropDB[stateRaw];
+        } else if (cropDB[cityRaw]) {
+            suggestions = cropDB[cityRaw];
+        } else {
+            // Partial match fallback
+            for (var key in cropDB) {
+                if (key === 'default') continue;
+                if (stateRaw.includes(key) || key.includes(stateRaw) ||
+                    cityRaw.includes(key)  || key.includes(cityRaw)) {
+                    suggestions = cropDB[key];
+                    break;
+                }
+            }
+        }
+
+        var grid = document.getElementById('crop-cartridge-area');
+        grid.innerHTML = '';
+
+        suggestions.forEach(function(cropName, i) {
+            var card = document.createElement('div');
+            card.className = 'holo-card';
+            card.innerText = cropName;
+            card.style.animationDelay = (i * 0.04) + 's';
+            grid.appendChild(card);
+        });
+
+        recUI.style.display = 'block';
+    }
+
+    window.onload = showRecommendations;
+
+    // ══════════════════════════════════════════════════
+    // 4. ACKNOWLEDGE (heavy rain, logged-in only)
+    // ══════════════════════════════════════════════════
+    function acknowledgeAlert() {
+        var btn = document.getElementById('ackBtn');
+        var msg = document.getElementById('saveMsg');
+
+        fetch('/record_application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                state:  "{{ state }}",
+                city:   "{{ city }}",
+                crop:   "{{ crop }}",
+                status: "⛔ Suspended (Heavy Rain)"
+            })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                btn.style.display = 'none';
+                msg.style.display = 'block';
+                setTimeout(function() { window.location.href = "/dashboard"; }, 2000);
+            } else {
+                alert("Error saving: " + data.message);
+            }
+        })
+        .catch(function() {
+            alert("Network error. Please try again.");
+        });
+    }
+</script>
+
+</body>
+</html>

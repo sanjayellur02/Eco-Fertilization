@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+   <script>
+   const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+   function securePost(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': CSRF_TOKEN
+      },
+      body: JSON.stringify({ ...body, csrf_token: CSRF_TOKEN })
+    }).then(r => r.json());
+  }
+   </script>
+    <title>ECO - FERTILIZATION</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* CORE LAYOUT */
+        body, html { margin: 0; padding: 0; overflow-x: hidden; scroll-behavior: smooth; }
+        section { width: 100%; min-height: 100vh; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* AUTH STYLES */
+        .auth-link { color: #b9ff00; text-decoration: none; font-size: 1rem; cursor: pointer; transition: 0.3s; }
+        .auth-link:hover { text-decoration: underline; color: #fff; }
+        .skip-btn { margin-top: 20px; color: rgba(255,255,255,0.6); font-size: 0.9rem; cursor: pointer; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,0.4); }
+        .remember-box { display: flex; align-items: center; font-size: 1rem; color: rgba(255,255,255,0.9); cursor: pointer; }
+        .remember-box input { margin-right: 10px; width: 16px; height: 16px; accent-color: #b9ff00; }
+        
+        /* HELPER */
+        .hidden { display: none !important; }
+
+        /* --- NEW: VOICE BUTTON STYLE --- */
+        .mic-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #b9ff00;
+            color: #fff;
+            cursor: pointer;
+            padding: 10px 14px;
+            font-size: 1.2rem;
+            border-radius: 4px;
+            transition: 0.3s;
+            margin-left: 5px;
+        }
+        .mic-btn:hover {
+            background: #b9ff00;
+            color: #000;
+            box-shadow: 0 0 10px #b9ff00;
+        }
+        .listening {
+            animation: pulse-red 1.5s infinite;
+            border-color: #ff3b30 !important;
+            background: rgba(255, 59, 48, 0.2) !important;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+        }
+        /* Force dropdown options to be readable */
+select option {
+    background-color: #1a1a1a !important; /* Dark background for the list */
+    color: #ffffff !important;           /* White text for the list */
+    padding: 10px;
+}
+
+/* Ensure the select box itself shows text clearly */
+select {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+    </style>
+</head>
+
+<body>
+
+    <section class="hero {% if mode == 'scan' %}hidden{% endif %}" id="heroSection">
+        <div class="scroll-indicator" onclick="scrollToLogin()"><span></span><span></span></div>
+    </section>
+
+    <section class="form-section {% if mode == 'scan' %}hidden{% endif %}" id="loginSection">
+        
+        <div class="glass-container" id="loginBox" style="max-width: 420px; width: 90%;">
+            <h2 class="form-title">System Access</h2>
+
+            <div class="input-grid" style="grid-template-columns: 1fr; gap: 20px;">
+        <div class="field-group">
+        <label style="font-size: 1rem;">Email</label>
+        <input type="email" id="loginEmail" style="padding: 14px; font-size: 1rem;">
+         </div>
+
+        <div class="field-group">
+        <label style="font-size: 1rem;">Password</label>
+        <div class="password-wrapper" style="position: relative; width: 100%;">
+            <input type="password" id="loginPass" style="padding: 14px; font-size: 1rem; width: 100%; padding-right: 45px; box-sizing: border-box;">
+            <span class="toggle-eye" onclick="togglePassword('loginPass')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; user-select: none;">👁️</span>
+        </div>
+        </div>
+        </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; width: 100%;">
+                <a href="/reset_page" class="auth-link">Forgot password?</a>
+            </div>
+            <p id="loginError" style="color: #ff6b6b; font-size: 1rem; margin-top: 15px; display: none; text-align: center;"></p>
+            <div class="form-footer" style="margin-top: 25px;">
+                <button type="button" class="submit-leaf-btn" onclick="doLogin()" style="width: 100%; font-size: 1.1rem; padding: 15px;">LOG IN</button>
+            </div>
+            <div style="text-align: center; margin-top: 25px; font-size: 1rem;">
+                <span style="opacity: 0.8;">Don't have an account?</span><span class="auth-link" style="margin-left: 5px;" onclick="toggleAuth('signup')">Sign up here.</span>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/scan" class="skip-btn">Continue as Guest &darr;</a>
+            </div>
+
+        </div>
+
+       <div class="glass-container" id="signupBox" style="max-width: 420px; width: 90%; display: none;">
+    <h2 class="form-title">Register</h2>
+    <div class="input-grid" style="grid-template-columns: 1fr; gap: 15px;">
+        <div class="field-group">
+            <label style="font-size: 1rem;">Full Name</label>
+            <input type="text" id="signName" placeholder="Enter your name" style="padding: 14px; font-size: 1rem;">
+        </div>
+
+        <div class="field-group">
+            <label style="font-size: 1rem;">Gender</label>
+            <select id="signGender" style="padding: 14px; font-size: 1rem; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px;">
+                <option value="" style="color: black;">Select Gender</option>
+                <option value="Male" style="color: black;">Male</option>
+                <option value="Female" style="color: black;">Female</option>
+                <option value="Other" style="color: black;">Other</option>
+            </select>
+        </div>
+
+        <div class="field-group">
+            <label style="font-size: 1rem;">Email</label>
+            <input type="email" id="signEmail" style="padding: 14px; font-size: 1rem;">
+        </div>
+        
+        <div class="field-group">
+            <label style="font-size: 1rem;">Password</label>
+            <input type="password" id="signPass" style="padding: 14px; font-size: 1rem;">
+        </div>
+    </div>
+    
+    <p id="signError" style="color: #ff6b6b; font-size: 1rem; margin-top: 15px; display: none; text-align: center;"></p>
+    
+    <div class="form-footer" style="margin-top: 25px;">
+        <button type="button" id="btnSignup" class="submit-leaf-btn" onclick="doSignup()" style="width: 100%; font-size: 1.1rem; padding: 15px;">SIGN UP</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 25px; font-size: 1rem;">
+        <span class="auth-link" onclick="toggleAuth('login')">Back to Login</span>
+    </div>
+</div>
+
+        <div class="glass-container" id="otpBox" style="max-width: 420px; width: 90%; display: none;">
+            <h2 class="form-title">Verify Email</h2>
+            <p style="text-align: center; font-size: 1rem; opacity: 0.9; margin-bottom: 25px;">We just sent a 6-digit code to your email.</p>
+            <div class="input-grid" style="grid-template-columns: 1fr;">
+                <div class="field-group">
+                    <label style="font-size: 1rem;">Enter OTP Code</label>
+                    <input type="text" id="otpCode" maxlength="6" style="padding: 14px; font-size: 1.5rem; text-align: center; letter-spacing: 5px; font-weight: bold;">
+                </div>
+            </div>
+            <p id="otpError" style="color: #ff6b6b; font-size: 1rem; margin-top: 15px; display: none; text-align: center;"></p>
+            <div class="form-footer" style="margin-top: 25px;">
+                <button type="button" id="btnVerifyOtp" class="submit-leaf-btn" onclick="verifyOtp()" style="width: 100%; font-size: 1.1rem; padding: 15px;">VERIFY & LOGIN</button>
+            </div>
+            <div style="text-align: center; margin-top: 25px; font-size: 1rem;">
+                <a href="javascript:void(0)" class="auth-link" onclick="toggleAuth('signup')">&larr; Back to Sign Up</a>
+            </div>
+        </div>
+
+         <div class="glass-container" id="forgotBox" style="max-width: 420px; width: 90%; display: none;">
+            <h2 class="form-title">Reset Password</h2>
+            <p style="text-align: center; font-size: 1rem; opacity: 0.9; margin-bottom: 25px;">Enter the email address linked to your account.</p>
+            <div class="input-grid" style="grid-template-columns: 1fr;">
+                <div class="field-group"><label style="font-size: 1rem;">Email</label><input type="email" id="forgotEmail" style="padding: 14px; font-size: 1rem;"></div>
+            </div>
+            <p id="resetMsg" style="color: #b9ff00; font-size: 1rem; margin-top: 15px; display: none; text-align: center;">Reset link sent!</p>
+            <div class="form-footer" style="margin-top: 25px;">
+                <button type="button" class="submit-leaf-btn" onclick="sendResetLink()" style="width: 100%; font-size: 1.1rem; padding: 15px;">Send Reset Link</button>
+            </div>
+            <div style="text-align: center; margin-top: 25px; font-size: 1rem;">
+                <a href="javascript:void(0)" class="auth-link" onclick="toggleAuth('login')">&larr; Back to Login</a>
+            </div>
+        </div>
+    </section>
+
+   <section class="form-section {% if mode == 'auth' %}hidden{% endif %}" id="formSection">
+    <div class="glass-container" style="max-width: 1100px; width: 95%; padding: 40px; border-radius: 20px; box-sizing: border-box;">
+        
+        {% if is_logged_in %}
+        <div style="margin-bottom: 25px;">
+            <a href="/dashboard" class="auth-link" style="display: flex; align-items: center; gap: 8px; font-weight: bold;">
+                <span>⬅</span> Back to Dashboard
+            </a>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/processing">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <h2 class="form-title" style="text-align: center; font-size: 2.2rem; margin-bottom: 30px; letter-spacing: 1px;">Input Details</h2>
+
+            <div class="dynamic-crop-container" style="margin-bottom: 20px;">
+                <label style="font-weight: bold; color: #b9ff00; margin-bottom: 10px; display: block;">Select Specific Crop:</label>
+                <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+                    <select id="crop" name="crop" required onchange="updateIconSelection(this.value)" style="flex: 1; padding: 14px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="" style="color: black;">Choose Crop...</option>
+                        <option value="Corn" style="color: black;">Corn</option>
+                        <option value="Rice" style="color: black;">Rice</option>
+                        <option value="Sunflower" style="color: black;">Sunflower</option>
+                    </select>
+                    <button type="button" class="mic-btn" id="btn-crop" onclick="startDictation('crop', 'select', 'btn-crop')" style="margin: 0; padding: 12px 16px;">🎙️</button>
+                </div>
+            </div>
+            
+            <div class="crop-wood-panel" style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; margin-bottom: 35px;">
+                <div class="crop-options" style="display: flex; justify-content: center; gap: 40px;">
+                    <div class="crop-item" onclick="selectCropIcon('Corn', this)" style="cursor: pointer; text-align: center;">
+                        <div class="crop-circle" id="vis-Corn" style="font-size: 2.2rem; background: rgba(255,255,255,0.1); width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid transparent; transition: 0.3s;">🌽</div>
+                        <span style="display: block; margin-top: 8px; font-weight: 500;">Corn</span>
+                    </div>
+                    <div class="crop-item" onclick="selectCropIcon('Rice', this)" style="cursor: pointer; text-align: center;">
+                        <div class="crop-circle" id="vis-Rice" style="font-size: 2.2rem; background: rgba(255,255,255,0.1); width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid transparent; transition: 0.3s;">🌾</div>
+                        <span style="display: block; margin-top: 8px; font-weight: 500;">Rice</span>
+                    </div>
+                    <div class="crop-item" onclick="selectCropIcon('Sunflower', this)" style="cursor: pointer; text-align: center;">
+                        <div class="crop-circle" id="vis-Sunflower" style="font-size: 2.2rem; background: rgba(255,255,255,0.1); width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid transparent; transition: 0.3s;">🌻</div>
+                        <span style="display: block; margin-top: 8px; font-weight: 500;">Sunflower</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                
+                <div class="glass-card" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(185, 255, 0, 0.3); padding: 30px; border-radius: 15px;">
+                    <h3 style="color: #b9ff00; margin-top: 0; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">🧪 Expert Soil Diagnostics</h3>
+                    
+                    <div class="field-group" style="margin-bottom: 35px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label style="font-weight: bold; color: #fff;">Soil pH Level</label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <b id="phVal" style="color: #b9ff00; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(185,255,0,0.3); font-size: 1.1rem;">7.0</b>
+                                <button type="button" class="mic-btn" id="btn-ph" onclick="startDictation('ph', 'text', 'btn-ph')" style="padding: 6px 10px; font-size: 1rem;">🎙️</button>
+                            </div>
+                        </div>
+                        <input type="range" name="ph" id="ph" min="3.5" max="9.5" step="0.1" value="7.0" style="width: 100%; accent-color: #b9ff00; cursor: pointer;" oninput="document.getElementById('phVal').innerText = this.value">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; opacity: 0.6; margin-top: 10px; color: white;">
+                            <span>Acidic</span><span>Neutral</span><span>Alkaline</span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label style="font-weight: bold; color: #fff;">Soil Moisture Content</label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <b id="moistVal" style="color: #b9ff00; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(185,255,0,0.3); font-size: 1.1rem;">50%</b>
+                                <button type="button" class="mic-btn" id="btn-moisture" onclick="startDictation('moisture', 'text', 'btn-moisture')" style="padding: 6px 10px; font-size: 1rem;">🎙️</button>
+                            </div>
+                        </div>
+                        <input type="range" name="moisture" id="moisture" min="0" max="100" step="1" value="50" style="width: 100%; accent-color: #b9ff00; cursor: pointer;" oninput="document.getElementById('moistVal').innerText = this.value + '%'">
+                    </div>
+                </div>
+
+                <div class="glass-card" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 15px;">
+                    <h3 style="color: #b9ff00; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">📍 Location Parameters</h3>
+                    
+                    <div class="location-method-container" style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+                        <div class="toggle-wrapper" style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+                            <span style="opacity: 0.7; font-size: 0.9rem;">Manual</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="locationToggle" onchange="handleLocationMethod(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="color: #b9ff00; font-weight: bold; font-size: 0.9rem;">Auto GPS</span>
+                        </div>
+                        <p id="locationStatus" style="text-align: center; margin-top: 10px; font-size: 0.85rem; color: #b9ff00; font-weight: bold; min-height: 1.2rem;"></p>
+                    </div>
+
+                    <div class="input-grid" id="manualLocation" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="field-group">
+                            <label style="font-size: 0.85rem; margin-bottom: 6px; display: block; opacity: 0.9;">State</label>
+                            <select id="state" name="state" style="width: 100%; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);"></select>
+                        </div>
+                        <div class="field-group">
+                            <label style="font-size: 0.85rem; margin-bottom: 6px; display: block; opacity: 0.9;">City</label>
+                            <select id="city" name="city" style="width: 100%; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);"></select>
+                        </div>
+                        <div class="field-group">
+                            <label style="font-size: 0.85rem; margin-bottom: 6px; display: block; opacity: 0.9;">Village</label>
+                            <input type="text" id="area" name="area" placeholder="Village Name" style="width: 100%; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        </div>
+                        <div class="field-group">
+                            <label style="font-size: 0.85rem; margin-bottom: 6px; display: block; opacity: 0.9;">Pincode</label>
+                            <input type="text" id="pincode" name="pincode" placeholder="6-digit Pin" style="width: 100%; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+
+            <div style="margin-top: 35px;">
+                <details style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                    <summary style="cursor: pointer; color: #fff; font-weight: bold; display: flex; align-items: center; gap: 10px;">⚙️ Manual Weather Override (Optional)</summary>
+                    <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 20px;">
+                        <input type="number" step="0.1" name="manual_temp" placeholder="Temp °C" style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <input type="number" step="0.1" name="manual_humid" placeholder="Hum %" style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <input type="number" step="0.1" name="manual_rain" placeholder="Rain mm" style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    </div>
+                </details>
+            </div>
+
+            <div class="form-footer" style="margin-top: 20px;">
+
+<button type="submit" class="submit-leaf-btn" style="width: 100%; padding: 15px; font-size: 1.2rem;">SUBMIT DIAGNOSTICS</button>
+
+</div>
+        </form>
+    </div>
+</section>
+
+    <script>
+      function scrollToLogin() { document.getElementById("loginSection").scrollIntoView({ behavior: "smooth" }); }
+
+function toggleAuth(view) {
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('signupBox').style.display = 'none';
+    document.getElementById('forgotBox').style.display = 'none';
+    document.getElementById('otpBox').style.display = 'none';
+    document.getElementById(view + 'Box').style.display = 'block';
+}
+
+// ✅ FIXED: now uses securePost
+function sendResetLink() {
+    const email = document.getElementById('forgotEmail').value;
+    const btn = document.querySelector('#forgotBox .submit-leaf-btn');
+    if (!email) { alert("Please enter your email"); return; }
+    btn.innerText = "Sending...";
+    securePost('/forgot_password_api', { email })
+    .then(data => {
+        btn.innerText = "Send Reset Link";
+        if (data.success) {
+            window.location.href = "/reset_page";
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function doLogin() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPass').value;
+    const errorMsg = document.getElementById('loginError');
+    if (!email || !password) {
+        errorMsg.innerText = "Email and Password are required.";
+        errorMsg.style.display = 'block';
+        return;
+    }
+    securePost('/login_api', { email, password })
+    .then(data => {
+        if (data.success) {
+            window.location.href = "/dashboard";
+        } else {
+            errorMsg.innerText = data.message;
+            errorMsg.style.display = 'block';
+        }
+    })
+    .catch(err => console.error("Login Error:", err));
+}
+
+// ✅ FIXED: was using `{ ...stuff }` which is wrong — now sends correct fields
+function doSignup() {
+    const name = document.getElementById('signName').value;
+    const gender = document.getElementById('signGender').value;
+    const email = document.getElementById('signEmail').value;
+    const password = document.getElementById('signPass').value;
+    if (!name || !gender || !email || !password) {
+        alert("Please fill all fields");
+        return;
+    }
+    const btn = document.getElementById('btnSignup');
+    btn.innerText = "Sending OTP...";
+    securePost('/signup_api', { name, gender, email, password })
+    .then(data => {
+        btn.innerText = "SIGN UP";
+        if (data.success && data.require_otp) {
+            toggleAuth('otp');
+        } else if (!data.success) {
+            document.getElementById('signError').innerText = data.message;
+            document.getElementById('signError').style.display = 'block';
+        }
+    });
+}
+
+// ✅ FIXED: now uses securePost
+function verifyOtp() {
+    const otp = document.getElementById('otpCode').value;
+    const btn = document.getElementById('btnVerifyOtp');
+    btn.innerText = "Verifying...";
+    securePost('/verify_otp_api', { otp })
+    .then(data => {
+        btn.innerText = "VERIFY & LOGIN";
+        if (data.success) {
+            window.location.href = "/dashboard";
+        } else {
+            document.getElementById('otpError').innerText = data.message;
+            document.getElementById('otpError').style.display = 'block';
+        }
+    });
+}
+
+function selectCropIcon(val, element) {
+    const mainSelect = document.getElementById('crop'); mainSelect.value = val; updateIconSelection(val);
+}
+function updateIconSelection(val) {
+    document.querySelectorAll('.crop-circle').forEach(c => c.classList.remove('active-crop'));
+    const activeIcon = document.getElementById('vis-' + val); if (activeIcon) activeIcon.classList.add('active-crop');
+}
+function handleLocationMethod(isAuto) {
+    const manualDiv = document.getElementById("manualLocation"); const status = document.getElementById("locationStatus");
+    if (isAuto) {
+        manualDiv.style.opacity = "0.4"; manualDiv.style.pointerEvents = "none"; status.innerText = "Accessing GPS...";
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                document.getElementById("latitude").value = pos.coords.latitude; document.getElementById("longitude").value = pos.coords.longitude; status.innerText = "Captured successfully ✔";
+            }, () => { alert("Access Denied."); document.getElementById("locationToggle").checked = false; handleLocationMethod(false); });
+        }
+    } else { manualDiv.style.opacity = "1"; manualDiv.style.pointerEvents = "auto"; status.innerText = ""; }
+}
+
+function startDictation(fieldId, type, btnId) {
+    if (window.hasOwnProperty('webkitSpeechRecognition')) {
+        var recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+        var btn = document.getElementById(btnId);
+        btn.classList.add('listening');
+        recognition.start();
+        recognition.onresult = function(e) {
+            var transcript = e.results[0][0].transcript;
+            transcript = transcript.replace('.', '').trim();
+            var element = document.getElementById(fieldId);
+            if (type === 'select') {
+                var found = false;
+                for (var i = 0; i < element.options.length; i++) {
+                    if (element.options[i].text.toLowerCase().includes(transcript.toLowerCase())) {
+                        element.selectedIndex = i;
+                        found = true;
+                        element.dispatchEvent(new Event('change'));
+                        break;
+                    }
+                }
+                if (!found) alert("Could not find '" + transcript + "' in the list.");
+            } else {
+                element.value = transcript;
+            }
+            recognition.stop();
+            btn.classList.remove('listening');
+        };
+        recognition.onerror = function(e) {
+            recognition.stop();
+            btn.classList.remove('listening');
+            alert("Voice input failed. Please try again.");
+        };
+    } else {
+        alert("Voice feature requires Google Chrome.");
+    }
+}
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    input.type = input.type === "password" ? "text" : "password";
+}
+    </script>
+    <script src="{{ url_for('static', filename='script/crops.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/state.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/cities.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/location.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/app.js') }}"></script>
+</body>
+</html>

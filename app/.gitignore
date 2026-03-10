@@ -1,0 +1,19 @@
+# Secrets — NEVER commit these
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pkl
+venv/
+env/
+
+# Database (contains user data)
+*.db
+*.sqlite
+
+# Logs
+*.log
+
+# macOS
+.DS_Store

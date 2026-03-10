@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eco Fertilization</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- ✅ CSRF token for JS -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+
+{% block body %}{% endblock %}
+
+<!-- ✅ Global helper — use securePost() instead of fetch() everywhere -->
+<script>
+  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+
+  function securePost(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': CSRF_TOKEN
+      },
+      body: JSON.stringify({ ...body, csrf_token: CSRF_TOKEN })
+    }).then(r => r.json());
+  }
+</script>
+
+</body>
+</html>

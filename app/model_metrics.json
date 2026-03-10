@@ -1,0 +1,18 @@
+{
+    "r2_N": 0.8755,
+    "r2_P": 0.9319,
+    "r2_K": 0.9952,
+    "r2_avg": 0.9342,
+    "mae_N": 10.52,
+    "mae_P": 7.12,
+    "mae_K": 2.88,
+    "mae_avg": 6.84,
+    "features": [
+        "Temperature",
+        "Humidity",
+        "pH",
+        "Rainfall",
+        "Crop (one-hot)"
+    ],
+    "model_type": "GradientBoostingRegressor x3 (separate N, P, K)"
+}

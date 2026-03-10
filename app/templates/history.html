@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fertilizer History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="
+    margin:0;
+    padding:0;
+    background:#0b2e1a;
+    font-family:Segoe UI, sans-serif;
+    color:white;
+">
+
+
+    <div style="
+        max-width:900px;
+        margin:50px auto;
+        background:rgba(0,0,0,0.55);
+        padding:30px;
+        border-radius:20px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    ">
+
+        <h2 style="text-align:center; margin-bottom:25px;">
+            🌱 Fertilizer Application History
+        </h2>
+
+        {% if records %}
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            text-align:center;
+        ">
+
+            <tr style="background:rgba(185,255,0,0.2);">
+                <th style="padding:12px;">Date</th>
+                <th style="padding:12px;">Crop</th>
+                <th style="padding:12px;">State</th>
+                <th style="padding:12px;">City</th>
+            </tr>
+
+            {% for r in records %}
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                <td style="padding:12px;">{{ r["data_applied"] }}</td>
+                <td style="padding:12px;">{{ r["crop"] }}</td>
+                <td style="padding:12px;">{{ r["state"] }}</td>
+                <td style="padding:12px;">{{ r["city"] }}</td>
+            </tr>
+            {% endfor %}
+
+        </table>
+
+        {% else %}
+
+        <p style="text-align:center; margin-top:30px; font-size:18px;">
+            No fertilizer applications found yet 🌾
+        </p>
+
+        {% endif %}
+
+        <div style="text-align:center; margin-top:30px;">
+            <a href="/" style="
+                color:#b9ff00;
+                text-decoration:none;
+                font-size:18px;
+                font-weight:600;
+            ">
+                ⬅ Back to Home
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>
