@@ -67,7 +67,7 @@ def make_session_permanent():
 @app.context_processor
 def inject_csrf():
     return {"csrf_token": generate_csrf_token()}
-DATABASE = os.environ.get("DATABASE", "users.db")
+DATABASE = os.environ.get("DATABASE", os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db"))
 
 # ===========================================================
 # 3. API KEYS & CONFIGURATIONS  ← loaded from .env now
@@ -1138,6 +1138,6 @@ def reset_page():
 # ===========================================================
 if __name__ == "__main__":
     port  = int(os.environ.get("FLASK_PORT",  5001))
-    debug = os.environ.get("FLASK_DEBUG", "true").lower() == "true"
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     logger.info("Starting Eco-Fertilization on port %d", port)
     app.run(debug=debug, host="0.0.0.0", port=port)

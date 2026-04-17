@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: eco-fertilization
+    runtime: python
+    rootDir: app
+    buildCommand: pip install -r ../requirements.txt
+    startCommand: gunicorn app:app --workers 2 --timeout 120 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: SENDER_EMAIL
+        sync: false
+      - key: SENDER_PASSWORD
+        sync: false
+      - key: DATABASE
+        value: /tmp/users.db
+      - key: FLASK_DEBUG
+        value: false
